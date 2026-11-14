@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.responses import JSONResponse
 
 app = FastAPI()
@@ -104,6 +104,6 @@ async def delete_task(task_id: int):
     for task in tasklist:
         if task["id"] == task_id:
             tasklist.remove(task)
-            return JSONResponse(status_code=201, content={"Deleted": task})
+            return Response(status_code=204)
 
     return JSONResponse(status_code=404, content={"Bad Request": "Unknown id"})
