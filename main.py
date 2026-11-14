@@ -69,7 +69,7 @@ async def add_task(body: dict):
 
     tasklist.append(new_task)
 
-    return JSONResponse(status_code=201, content={"Created": f"{new_task}"})
+    return JSONResponse(status_code=201, content={"Created": new_task})
 
 @app.put("/tasks/{task_id}")
 async def replace_task(body: dict, task_id: int):
@@ -96,7 +96,7 @@ async def replace_task(body: dict, task_id: int):
     if task_status:
         task_with_id["done"] = task_status
 
-    return JSONResponse(status_code=200, content={"Updated": f"{task_with_id}"})
+    return JSONResponse(status_code=200, content={"Updated": task_with_id})
 
 @app.delete("/tasks/{task_id}")
 async def delete_task(task_id: int):
@@ -104,6 +104,6 @@ async def delete_task(task_id: int):
     for task in tasklist:
         if task["id"] == task_id:
             tasklist.remove(task)
-            return JSONResponse(status_code=201, content={"Deleted": f"{task}"})
+            return JSONResponse(status_code=201, content={"Deleted": task})
 
     return JSONResponse(status_code=404, content={"Bad Request": "Unknown id"})
