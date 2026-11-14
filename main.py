@@ -70,3 +70,40 @@ async def add_task(body: dict):
     tasklist.append(new_task)
 
     return JSONResponse(status_code=201, content={"Created": f"{new_task}"})
+
+@app.put("/tasks/{task_id}")
+async def replace_task(body: dict, task_id: int):
+
+    task_title = body.get("title") or None
+    task_status = body.get("done") or None
+
+    if not task_title and not task_status:
+        return JSONResponse(status_code=400, content={"Bad Request": "Empty/invalid body"})
+
+    tid = task_id
+    task_with_id = None
+
+    for task in tasklist:
+        if task["id"]==tid:
+            task_with_id = task
+            break
+
+    if not task_with_id:
+        return JSONResponse(status_code=404, content={"Bad Request": "Unknown id"})
+
+    if task_title:
+        task_with_id["title"] = task_title
+    if task_status:
+        task_with_id["done"] = task_status
+
+    return JSONResponse(status_code=200, content={"Updated": f"{task_with_id}"})
+
+@app.delete("/tasks/{task_id}")
+async def delete_task(task_id: int):
+
+    for task in tasklist:
+        if task["id"] == task_id:
+            tasklist.remove(task)
+            return JSONResponse(status_code=201, content={"Deleted": f"{task}"})
+
+    return JSONResponse(status_code=404, content={"Bad Request": "Unknown id"})
