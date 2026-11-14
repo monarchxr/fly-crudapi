@@ -74,17 +74,19 @@ async def add_task(body: dict):
 @app.put("/tasks/{task_id}")
 async def replace_task(body: dict, task_id: int):
 
-    task_title = body.get("title") or None
-    task_status = body.get("done") or None
+    task_title = body.get("title")
+    task_status = body.get("done")
 
-    if not task_title and not task_status:
+    if not task_title and task_status is None:
         return JSONResponse(status_code=400, content={"Bad Request": "Empty/invalid body"})
 
-    tid = task_id
+    if task_status is not None and not isinstance(task_status, bool):
+        return JSONResponse(status_code=400, content={"Bad Request": "'done' must be a boolean"})
+
     task_with_id = None
 
     for task in tasklist:
-        if task["id"]==tid:
+        if task["id"]==task_id:
             task_with_id = task
             break
 
@@ -93,7 +95,7 @@ async def replace_task(body: dict, task_id: int):
 
     if task_title:
         task_with_id["title"] = task_title
-    if task_status:
+    if task_status is not None:
         task_with_id["done"] = task_status
 
     return JSONResponse(status_code=200, content={"Updated": task_with_id})
