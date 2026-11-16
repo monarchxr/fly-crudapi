@@ -28,7 +28,7 @@ async def root():
     return{
         "name": "Task API",
         "version": "1.0",
-        "endpoints": ["/tasks", "/tasks/{task_id}", "/health"]
+        "endpoints": ["/tasks", "/tasks/{task_id}", "/health", "/tasks/"]
         }
 
 @app.get("/health")
@@ -109,3 +109,14 @@ async def delete_task(task_id: int):
             return Response(status_code=204)
 
     return JSONResponse(status_code=404, content={"Bad Request": "Unknown id"})
+
+@app.get("/tasks/")
+def group_tasks_by_status(done: bool=False):
+    task_required = []
+
+    for task in tasklist:
+        if task["done"]==done:
+            task_required.append(task)
+
+    if task_required:
+        return JSONResponse(status_code=200, content={"Tasks are as follows": task_required})
