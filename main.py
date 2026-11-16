@@ -28,7 +28,7 @@ async def root():
     return{
         "name": "Task API",
         "version": "1.0",
-        "endpoints": ["/tasks", "/tasks/{task_id}", "/health", "/tasks/"]
+        "endpoints": ["/tasks", "/tasks/{task_id}", "/health", "/tasks/", "/stats"]
         }
 
 @app.get("/health")
@@ -120,3 +120,17 @@ def group_tasks_by_status(done: bool=False):
 
     if task_required:
         return JSONResponse(status_code=200, content={"Tasks are as follows": task_required})
+
+@app.get("/stats")
+def calculate_stats():
+    total = len(tasklist)
+    done = 0
+    open = 0
+
+    for task in tasklist:
+        if task["done"] is True:
+            done+=1
+    
+    open = total - done
+
+    return JSONResponse(status_code=200, content={"total": total, "done": done, "open": open})
