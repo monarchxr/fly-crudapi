@@ -3,32 +3,14 @@ from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
-tasklist = [
-    {
-        "id": 1,
-        "title": "Create setup",
-        "done": True
-    },
-
-    {
-        "id": 2,
-        "title": "Create task list",
-        "done": True
-    },
-
-    {
-        "id": 3,
-        "title": "Complete API work",
-        "done": False
-    }
-]
+tasklist = []
 
 @app.get("/")
 async def root():
     return{
         "name": "Task API",
         "version": "1.0",
-        "endpoints": ["/tasks", "/tasks/{task_id}", "/health", "/tasks/", "/stats"]
+        "endpoints": ["/tasks", "/tasks/{task_id}", "/health", "/tasks/", "/stats", "/reset"]
         }
 
 @app.get("/health")
@@ -134,3 +116,29 @@ def calculate_stats():
     open = total - done
 
     return JSONResponse(status_code=200, content={"total": total, "done": done, "open": open})
+
+@app.post("/reset")
+def reset_tasks():
+
+    sample_tasks = [{
+            "id": 1,
+            "title": "Create setup",
+            "done": True
+        },
+    
+        {
+            "id": 2,
+            "title": "Create task list",
+            "done": True
+        },
+    
+        {
+            "id": 3,
+            "title": "Complete API work",
+            "done": False
+        }]
+
+    tasklist.clear()
+    tasklist.extend(sample_tasks)
+
+    return JSONResponse(status_code=201, content={"message": "Tasks reset to  default 3 tasks successfully", "tasks": tasklist})
