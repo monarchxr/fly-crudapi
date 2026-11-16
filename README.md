@@ -18,9 +18,9 @@ To run it
 
 ## Endpoints
 
-| Endpoint 1 | Endpoint 2 | Endpoint 3|
-| ---------- | ---------- | --------- |
-| /health | /tasks | /tasks/{id} |
+| Endpoint 1 | Endpoint 2 | Endpoint 3| Endpoint 4 | Endpoint 5 | Endpoint 6 |
+| ---------- | ---------- | --------- | ---------- | ---------- | ---------- |
+| /health | /tasks | /tasks/{id} | /tasks/ | /stats | /reset |
 
 ## Sample curl output
 ![curl](assets/curl_output.png)
