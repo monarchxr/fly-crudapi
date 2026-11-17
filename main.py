@@ -1,6 +1,6 @@
 import sqlite3
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, Depends
 from fastapi.responses import JSONResponse
 
 @asynccontextmanager                                # turns the function below into a startup/shutdown manager
@@ -32,6 +32,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+def get_db():
+    conn = sqlite3.connect("tasks.db", check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
 @app.get("/")
 async def root():
     return{
@@ -47,18 +57,14 @@ async def health():
     }
 
 @app.get("/tasks")
-async def tasks():
-    return tasklist
+async def tasks(db: sqlite3.Connection = Depends(get_db)):
+    tasks = db.execute("SELECT * FROM tasks").fetchall()
+    return tasks
 
 @app.get("/tasks/{task_id}")
-async def get_task(task_id: int):
+async def get_task(task_id: int, db: sqlite3.Connection = Depends(get_db)):
 
-    task_with_id = None
-
-    for task in tasklist:
-        if task["id"]==task_id:
-            task_with_id = task
-            break
+    task_with_id = db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
 
     if task_with_id is None:
         return JSONResponse(status_code=404, content={"error": f"Task {task_id} not found"})
