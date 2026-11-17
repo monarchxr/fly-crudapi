@@ -1,9 +1,36 @@
+import sqlite3
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Response
 from fastapi.responses import JSONResponse
 
-app = FastAPI()
+@asynccontextmanager                                # turns the function below into a startup/shutdown manager
+async def lifespan(app: FastAPI):
+    conn = sqlite3.connect("tasks.db")              # opens or creates database file
+    cursor = conn.cursor()                          # creates a cursor object to execute SQL commands
 
-tasklist = []
+    cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tasks (
+                id INTEGER PRIMARY KEY,
+                title TEXT,
+                done BOOLEAN
+            )
+    """)
+
+    cursor.execute("SELECT 1 FROM tasks LIMIT 1")
+    is_empty = cursor.fetchone() is None
+
+    if is_empty:
+        seed_tasks = [("Set up database", 1), ("Build API endpoints", 1), ("Test endpoints", 0),]
+
+        cursor.executemany("INSERT INTO tasks (title, done) VALUES (?, ?)",seed_tasks)
+
+    conn.commit()                                   # save table creation permanently to db file
+    conn.close()                                    # close db conn so file is not locked
+
+    yield                                           # pause while server runs and handles requests
+    print("Server shutting down")
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 async def root():
