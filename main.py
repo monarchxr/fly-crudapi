@@ -87,7 +87,7 @@ async def add_task(body: dict, db: sqlite3.Connection = Depends(get_db)):
     return JSONResponse(status_code=201, content={"Created": {"id": new_id, "title": task_title, "done": 0}})
 
 @app.put("/tasks/{task_id}")
-async def replace_task(body: dict, task_id: int):
+async def replace_task(body: dict, task_id: int, db: sqlite3.Connection = Depends(get_db)):
 
     task_title = body.get("title")
     task_status = body.get("done")
@@ -98,32 +98,35 @@ async def replace_task(body: dict, task_id: int):
     if task_status is not None and not isinstance(task_status, bool):
         return JSONResponse(status_code=400, content={"Bad Request": "'done' must be a boolean"})
 
-    task_with_id = None
+    row = db.execute("SELECT * from tasks where id=?", (task_id,)).fetchone()
 
-    for task in tasklist:
-        if task["id"]==task_id:
-            task_with_id = task
-            break
-
-    if not task_with_id:
+    if row is None:
         return JSONResponse(status_code=404, content={"Bad Request": "Unknown id"})
 
     if task_title:
-        task_with_id["title"] = task_title
+        db.execute("UPDATE tasks SET title = ? where id = ?", (task_title, task_id))
     if task_status is not None:
-        task_with_id["done"] = task_status
+        db.execute("UPDATE tasks set done = ? where id = ?", (task_status, task_id))
 
-    return JSONResponse(status_code=200, content={"Updated": task_with_id})
+    db.commit()
+
+    updated_row = db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+    output = dict(updated_row)
+
+    return JSONResponse(status_code=200, content={"Updated": output})
 
 @app.delete("/tasks/{task_id}")
-async def delete_task(task_id: int):
+async def delete_task(task_id: int, db: sqlite3.Connection = Depends(get_db)):
 
-    for task in tasklist:
-        if task["id"] == task_id:
-            tasklist.remove(task)
-            return Response(status_code=204)
+    row = db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
 
-    return JSONResponse(status_code=404, content={"Bad Request": "Unknown id"})
+    if row is None:
+        return JSONResponse(status_code=404, content={"Bad Request": "Unknown id"})
+
+    db.execute("DELETE from tasks WHERE id = ?", (task_id,))
+    db.commit()
+
+    return Response(status_code=204)
 
 @app.get("/tasks/")
 def group_tasks_by_status(done: bool=False):
