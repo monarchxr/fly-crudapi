@@ -140,15 +140,9 @@ def group_tasks_by_status(done: bool=False):
         return JSONResponse(status_code=200, content={"Tasks are as follows": task_required})
 
 @app.get("/stats")
-def calculate_stats():
-    total = len(tasklist)
-    done = 0
-    open = 0
-
-    for task in tasklist:
-        if task["done"] is True:
-            done+=1
-    
+def calculate_stats(db: sqlite3.Connection = Depends(get_db)):
+    total = db.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
+    done = db.execute("SELECT COUNT(*) FROM tasks where done = ?", (1,)).fetchone()[0]
     open = total - done
 
     return JSONResponse(status_code=200, content={"total": total, "done": done, "open": open})
