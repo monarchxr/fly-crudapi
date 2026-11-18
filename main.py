@@ -72,19 +72,19 @@ async def get_task(task_id: int, db: sqlite3.Connection = Depends(get_db)):
     return task_with_id
 
 @app.post("/tasks")
-async def add_task(body: dict):
+async def add_task(body: dict, db: sqlite3.Connection = Depends(get_db)):
     task_title = body.get("title") or None
 
     if not task_title:
         return JSONResponse(status_code=400, content={"Bad Request": "task title cannot be empty"})
 
-    new_id = tasklist[-1]["id"]+1 if tasklist else 1
+    row = db.execute("SELECT MAX(id) from tasks").fetchone()                        #tasklist[-1]["id"]+1 if tasklist else 1
+    new_id = (row[0]+1) if row[0] is not None else 1
 
-    new_task = {"id": new_id, "title": task_title, "done": False}
+    db.execute("INSERT INTO tasks (id,title,done) VALUES (?, ?, ?)",(new_id, task_title, 0,))
+    db.commit()
 
-    tasklist.append(new_task)
-
-    return JSONResponse(status_code=201, content={"Created": new_task})
+    return JSONResponse(status_code=201, content={"Created": {"id": new_id, "title": task_title, "done": 0}})
 
 @app.put("/tasks/{task_id}")
 async def replace_task(body: dict, task_id: int):
