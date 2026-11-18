@@ -129,12 +129,13 @@ async def delete_task(task_id: int, db: sqlite3.Connection = Depends(get_db)):
     return Response(status_code=204)
 
 @app.get("/tasks/")
-def group_tasks_by_status(done: bool=False):
+def group_tasks_by_status(done: bool=False, db: sqlite3.Connection = Depends(get_db)):
     task_required = []
 
-    for task in tasklist:
-        if task["done"]==done:
-            task_required.append(task)
+    rows = db.execute("SELECT * FROM  tasks WHERE done IS ?", (done,)).fetchall()
+
+    for row in rows:
+        task_required.append(dict(row))
 
     if task_required:
         return JSONResponse(status_code=200, content={"Tasks are as follows": task_required})
@@ -146,29 +147,3 @@ def calculate_stats(db: sqlite3.Connection = Depends(get_db)):
     open = total - done
 
     return JSONResponse(status_code=200, content={"total": total, "done": done, "open": open})
-
-@app.post("/reset")
-def reset_tasks():
-
-    sample_tasks = [{
-            "id": 1,
-            "title": "Create setup",
-            "done": True
-        },
-    
-        {
-            "id": 2,
-            "title": "Create task list",
-            "done": True
-        },
-    
-        {
-            "id": 3,
-            "title": "Complete API work",
-            "done": False
-        }]
-
-    tasklist.clear()
-    tasklist.extend(sample_tasks)
-
-    return JSONResponse(status_code=201, content={"message": "Tasks reset to  default 3 tasks successfully", "tasks": tasklist})
